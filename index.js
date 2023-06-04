@@ -34,7 +34,8 @@ async function run() {
     const database = client.db('TasteTreasury');
     const menuCollection = database.collection('menu');
     const reviewsCollection = database.collection('reviews');
-    const cartCollection = database.collection('cart')
+    const cartCollection = database.collection('cart');
+    const userCollection = database.collection('user');
 
     //server connections
     app.get('/menu', async(req,res) => {
@@ -54,6 +55,10 @@ async function run() {
       const result = await cartCollection.find(query).toArray();
       res.send(result);
     })
+    app.get('/users', async (req,res) => {
+      const result = await userCollection.find().toArray();
+      res.send(result);
+    })
     // send data to db
     app.post('/cart', async (req,res) => {
       const item = req.body;
@@ -61,6 +66,19 @@ async function run() {
 
       res.send(result);
 
+    })
+    app.post('/users', async (req,res) => {
+      const user = req.body;
+      const query = {email: user.email};
+      
+      const exitingUser = await userCollection.findOne(query);
+      // console.log(exitingUser);
+      if (exitingUser) {
+        return res.send('user all ready exists')
+      }
+      
+      const result = await userCollection.insertOne(user);
+      res.send(result)
     })
     //delete data from DB
     app.delete('/cart/:id', async (req,res) => {
