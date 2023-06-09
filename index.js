@@ -62,6 +62,18 @@ async function run() {
       });
       res.send({ token });
     });
+
+    //varify admin
+
+    const varifyAdmin = async (req,res,next) => {
+      const email = req.decoded.email;
+      const query = {email : email};
+      const user = await userCollection.findOne(query);
+      if (user?.role !== 'admin') {
+        return res.status(403).send({error: true, message:"Forbidden access"})
+      }
+      next();
+    }
     //server connections
     app.get("/menu", async (req, res) => {
       const result = await menuCollection.find().toArray();
@@ -101,7 +113,7 @@ async function run() {
       const result = await cartCollection.find(query).toArray();
       res.send(result);
     });
-    app.get("/users", async (req, res) => {
+    app.get("/users", varifyJWT, varifyAdmin, async (req, res) => {
       const result = await userCollection.find().toArray();
       res.send(result);
     });
@@ -125,6 +137,12 @@ async function run() {
 
       res.send(result);
     });
+    app.post("/menu/item", varifyJWT, varifyAdmin, async (req,res) => {
+      const item = req.body;
+      const result = await menuCollection.insertOne(item);
+
+      res.send(result);
+    })
     app.post("/users", async (req, res) => {
       const user = req.body;
       const query = { email: user.email };
@@ -153,6 +171,13 @@ async function run() {
 
       res.send(result);
     });
+    app.delete('/menu/:id', varifyJWT, varifyAdmin, async (req,res) => {
+      const id = req.params.id;
+      const query = {_id : new ObjectId(id) };
+      const result = await menuCollection.deleteOne(query);
+
+      res.send(result)
+    })
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
