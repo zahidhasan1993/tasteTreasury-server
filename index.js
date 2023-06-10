@@ -119,6 +119,21 @@ async function run() {
       const result = await userCollection.find().toArray();
       res.send(result);
     });
+
+    app.get('/admin-stats', async (req,res) => {
+      const totalUser = await userCollection.estimatedDocumentCount();
+      const totalItem = await menuCollection.estimatedDocumentCount();
+      const totalOrder = await paymentCollection.estimatedDocumentCount();
+
+      const payments = await paymentCollection.find().toArray();
+      const revenue = payments.reduce((sum, item) => sum + item.amount,0);
+      res.send({
+        totalUser,
+        totalItem,
+        totalOrder,
+        revenue
+      })
+    })
     // make admin api / update admin role
     app.patch("/users/admin/:id", async (req, res) => {
       const id = req.params.id;
