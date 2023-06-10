@@ -55,6 +55,7 @@ async function run() {
     const reviewsCollection = database.collection("reviews");
     const cartCollection = database.collection("cart");
     const userCollection = database.collection("user");
+    const paymentCollection = database.collection("payment");
     //jwt token
     app.post("/jwt", (req, res) => {
       const body = req.body;
@@ -153,6 +154,14 @@ async function run() {
       res.send({
         clientSecret: paymentIntent.client_secret
       })
+    })
+    app.post('/payment/:email', varifyJWT, async (req,res) => {
+      const payment = req.body;
+      const email = req.params.email;
+      const paymentResult = await paymentCollection.insertOne(payment);
+      const query = { email: {$regex: email}}
+      const cartResult = await cartCollection.deleteMany(query)
+      res.send({paymentResult, cartResult});
     })
     app.post("/menu/item", varifyJWT, varifyAdmin, async (req,res) => {
       const item = req.body;
