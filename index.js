@@ -1,9 +1,9 @@
 const express = require("express");
 const cors = require("cors");
+const app = express();
 const jwt = require('jsonwebtoken');
 require("dotenv").config();
-const stripe = require("stripe")(process.env.STRIPE_SECRET)
-const app = express();
+const stripe = require('stripe')(process.env.PAYMENT_SECRET_KEY);
 const port = process.env.PORT || 5000;
 
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
@@ -140,19 +140,19 @@ async function run() {
     });
 
     //payment getway
-    app.post('/create-payment-intent', async (req,res) => {
-      const {price} = req.body;
-      const amount = price*100;
+    app.post('/create-payment-intent', varifyJWT, async (req, res) => {
+      const { price } = req.body;
+      const amount = parseInt(price * 100);
+      
       const paymentIntent = await stripe.paymentIntents.create({
         amount: amount,
         currency: 'usd',
-        automatic_payment_methods:{
-          enabled: true,
-        }
+        payment_method_types: ['card']
       });
+      // console.log(paymentIntent.client_secret);
       res.send({
-        clientSecret: paymentIntent.client_secret,
-      });
+        clientSecret: paymentIntent.client_secret
+      })
     })
     app.post("/menu/item", varifyJWT, varifyAdmin, async (req,res) => {
       const item = req.body;
